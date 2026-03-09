@@ -42,9 +42,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
 								child: Container(
 									height: MediaQuery.of(context).size.width,
 									width: MediaQuery.of(context).size.width,
-									decoration: BoxDecoration(
+									decoration: const BoxDecoration(
 										shape: BoxShape.circle,
-										color: Theme.of(context).colorScheme.tertiary
+										color:  Color.fromARGB(255, 221, 163, 122) //Theme.of(context).colorScheme.tertiary
 									),
 								),
 							),

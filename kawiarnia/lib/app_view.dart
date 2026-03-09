@@ -10,9 +10,9 @@ class MyAppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Pizza Delivery',
+        title: 'Kawiarnia',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: ColorScheme.light(surface: Colors.grey.shade200, onSurface: Colors.black, primary: Colors.blue, onPrimary: Colors.white)),
+        theme: ThemeData(colorScheme: ColorScheme.light(surface: Colors.grey.shade200, onSurface: Colors.black, primary: const Color.fromARGB(255, 94, 56, 43), onPrimary: Colors.white)),
         home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
           builder: ((context, state) {
             if (state.status == AuthenticationStatus.authenticated) {
