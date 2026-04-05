@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:kawiarnia/screens/auth/views/welcome_screen.dart';
-import 'package:kawiarnia/screens/home/views/home_screen.dart';
+import 'package:kawiarnia/screens/app_bar.dart';
 
 class MyAppView extends StatelessWidget {
   const MyAppView({super.key});
@@ -15,13 +15,13 @@ class MyAppView extends StatelessWidget {
         theme: ThemeData(colorScheme: ColorScheme.light(
           surface: Colors.grey.shade200, 
           onSurface: Colors.black, 
-          primary: const Color.fromARGB(255, 148, 101, 85), 
+          primary: const Color.fromARGB(255, 192, 131, 111), 
           onPrimary: Colors.white)
         ),
         home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
           builder: ((context, state) {
             if (state.status == AuthenticationStatus.authenticated) {
-              return const HomeScreen(); 
+              return const MainScreen(); 
             } else {
               return const WelcomeScreen();
             }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kawiarnia/screens/cart/cart_manager.dart';
 
 class DetailsScreen extends StatefulWidget {
   const DetailsScreen({super.key});
@@ -31,7 +32,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ZDJĘCIE
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.width * 0.9,
@@ -177,7 +177,40 @@ class _DetailsScreenState extends State<DetailsScreen> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(30),
                 onTap: () {
-                  // todo cart add action
+                  // 1. Zbieramy dane o produkcie do dodania
+                  final newItem = {
+                    'name': 'Caffe Latte', // W przyszłości to będzie zmienna z bazy danych
+                    'subtitle': 'Izolowana szklanka',
+                   'price': _basePrice, // 35.0
+                   'quantity': _quantity,
+                   'image': 'assets/caffe_latte.png',
+                  };
+
+                  // 2. Sprawdzamy, czy ta kawa już przypadkiem nie jest w koszyku
+                  final existingItemIndex = CartManager.items.indexWhere((item) => item['name'] == newItem['name']);
+
+                  setState(() {
+                   if (existingItemIndex >= 0) {
+                       // Jeśli kawa już tam jest, po prostu dodajemy do niej kolejną ilość
+                       CartManager.items[existingItemIndex]['quantity'] += _quantity;
+                     } else {
+                      // Jeśli to nowość, wrzucamy na listę
+                       CartManager.items.add(newItem);
+                      }
+                    } 
+                  );  
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                  content: Text('Dodano $_quantity x Caffe Latte do koszyka!'),
+                  backgroundColor: Theme.of(context).colorScheme.onSurface,
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                   ),
+                  );
+
+                 Navigator.pop(context);
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
