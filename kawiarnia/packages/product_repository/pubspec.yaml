@@ -1,4 +1,4 @@
-name: kawiarnia_repository
+name: product_repository
 description: The Repo that handles users.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.0.1

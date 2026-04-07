@@ -20,9 +20,9 @@ dependencies:
 
   user_repository:
     path: packages/user_repository
-  kawiarnia_repository:
-    path: packages/kawiarnia_repository
-
+  product_repository:
+    path: packages/product_repository
+    
 dev_dependencies:
   flutter_test:
     sdk: flutter

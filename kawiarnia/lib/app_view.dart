@@ -4,6 +4,8 @@ import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:kawiarnia/screens/auth/blocks/sign_in_bloc/sign_in_bloc.dart';
 import 'package:kawiarnia/screens/auth/views/welcome_screen.dart';
 import 'package:kawiarnia/screens/app_bar.dart';
+import 'package:kawiarnia/screens/home/blocks/get_product_bloc/get_product_bloc.dart';
+import 'package:product_repository/product_repository.dart';
 
 class MyAppView extends StatelessWidget {
   const MyAppView({super.key});
@@ -22,10 +24,19 @@ class MyAppView extends StatelessWidget {
         home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
           builder: ((context, state) {
             if (state.status == AuthenticationStatus.authenticated) {
-              return BlocProvider(
-                create: (context) => SignInBloc(
-                  context.read<AuthenticationBloc>().userRepository,
-                ),
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (context) => SignInBloc(
+                      context.read<AuthenticationBloc>().userRepository,
+                    ),
+                  ),
+                  BlocProvider(
+                    create: (context) => GetProductBloc(
+                      FirebaseKawiarniaRepo()
+                      )..add(GetProduct()),
+                  ),
+                ],
                 child: const MainScreen(),
               );
             } else {
