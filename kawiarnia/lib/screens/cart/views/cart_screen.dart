@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kawiarnia/screens/cart/cart_manager.dart';
+import 'package:kawiarnia/screens/cart/views/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -42,15 +43,6 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.grey.shade300,
-              child: const Icon(Icons.person, color: Colors.white),
-            ),
-          ),
-        ],
       ),
 
       body: SingleChildScrollView(
@@ -167,7 +159,10 @@ class _CartScreenState extends State<CartScreen> {
                       onPressed: CartManager.items.isEmpty 
                           ? null // Wyłącza przycisk, jeśli koszyk jest pusty
                           : () {
-                              // Logika płatności
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
+                              );
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,

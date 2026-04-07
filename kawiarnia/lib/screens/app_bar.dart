@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kawiarnia/screens/cart/views/cart_screen.dart';
 import 'package:kawiarnia/screens/home/views/home_screen.dart';
+import 'package:kawiarnia/screens/account/views/account_screen.dart';
 
 
 class MainScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const CartScreen(),
-    const Center(child: Text('Tutaj będzie Profil', style: TextStyle(fontSize: 24))),
+    const ProfileScreen(),
   ];
 
   @override
