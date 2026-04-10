@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/screens/auth/blocks/sign_in_bloc/sign_in_bloc.dart';
 
-// Używamy StatefulWidget, aby zarządzać stanem paska nawigacyjnego i wylogowaniem
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -11,7 +10,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Przykładowe dane profilu (do podmiany w przyszłości)
+  // Przykładowe dane profilu
   final String _displayName = 'Julianna Thorne';
   final String _memberLevel = 'GOLD MEMBER';
   final int _activeOrdersCount = 2;

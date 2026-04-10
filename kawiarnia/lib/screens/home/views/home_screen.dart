@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
 import 'package:kawiarnia/screens/home/blocks/get_product_bloc/get_product_bloc.dart';
 import 'package:kawiarnia/screens/home/views/details_screen.dart';
 
@@ -50,10 +51,15 @@ class HomeScreen extends StatelessWidget {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16.0),
                         onTap: () {
+                          final cartBloc = context.read<CartBloc>();
                           Navigator.push(
                             context,
                             MaterialPageRoute<void>(
-                                builder: (context) => const DetailsScreen()),
+                             builder: (context) => BlocProvider.value(
+                              value: cartBloc,
+                              child: DetailsScreen(state.products[i]),
+                              ),
+                            ),
                           );
                         },
                         child: Column(

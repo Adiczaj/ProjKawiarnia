@@ -4,6 +4,7 @@ class ProductEntity {
   final String description;
   final String link;
   final double price;
+  final bool milk;
 
   ProductEntity({
     required this.productId,
@@ -11,6 +12,7 @@ class ProductEntity {
     required this.description,
     required this.link,
     required this.price,
+    required this.milk,
   });
 
   Map<String, Object?> toDocument() {
@@ -20,6 +22,7 @@ class ProductEntity {
       'description': description,
       'link': link,
       'price': price,
+      'milk': milk,
     };
   }
 
@@ -30,6 +33,7 @@ class ProductEntity {
       description: doc['description'] as String,
       link: doc['link'] as String,
       price: (doc['price'] as num).toDouble(),
+      milk: doc['milk'] as bool,
     );
   }
 }

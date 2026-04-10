@@ -19,8 +19,8 @@ class OrderSuccessScreen extends StatelessWidget {
               // 1. Sprężysta animacja ikony sukcesu
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1000), // Czas trwania animacji
-                curve: Curves.elasticOut, // Efekt "odbicia/sprężyny"
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.elasticOut,
                 builder: (context, value, child) {
                   return Transform.scale(
                     scale: value,
@@ -51,7 +51,7 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // 2. Animacja pojawiania się tekstu (Fade In)
+              // 2. Animacja pojawiania się tekstu
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 800),
@@ -94,7 +94,6 @@ class OrderSuccessScreen extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 builder: (context, value, child) {
                   return Transform.translate(
-                    // Przycisk "wjeżdża" delikatnie z dołu
                     offset: Offset(0, 50 * (1 - value)), 
                     child: Opacity(
                       opacity: value,
@@ -114,7 +113,7 @@ class OrderSuccessScreen extends StatelessWidget {
                       elevation: 5,
                     ),
                     onPressed: () {
-                      // Wraca do samego początku aplikacji (do MainScreen z paskiem)
+                      // Wraca do samego początku aplikacji
                       Navigator.popUntil(context, (route) => route.isFirst);
                     },
                     child: const Text(

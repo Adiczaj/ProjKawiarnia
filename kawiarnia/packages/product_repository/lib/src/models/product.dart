@@ -6,6 +6,7 @@ class Product {
   final String description;
   final String link;
   final double price;
+  final bool milk;
 
   Product({
     required this.productId,
@@ -13,6 +14,7 @@ class Product {
     required this.description,
     required this.link,
     required this.price,
+    required this.milk,
   });
 
   ProductEntity toEntity() {
@@ -22,6 +24,7 @@ class Product {
       description: description,
       link: link,
       price: price,
+      milk: milk,
     );
   }
 
@@ -32,6 +35,7 @@ class Product {
       description: entity.description,
       link: entity.link,
       price: entity.price,
+      milk: entity.milk,
     );
   }
 }

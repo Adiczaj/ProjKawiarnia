@@ -10,7 +10,7 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final double deliveryFee = 0.00; // Darmowa dostawa
+  final double deliveryFee = 0.00;
 
   // Funkcja obliczająca sumę koszyka na podstawie globalnej listy
   double get subtotal {
@@ -118,10 +118,10 @@ class _CartScreenState extends State<CartScreen> {
                 const SizedBox(width: 12),
                 ElevatedButton(
                   onPressed: () {
-                    // Logika kodu promocyjnego (np. walidacja kodu, zastosowanie rabatu)
+                    // Logika kodu promocyjnego
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF3CFC6), // Jasnobrzoskwiniowy
+                    backgroundColor: const Color(0xFFF3CFC6),
                     foregroundColor: Theme.of(context).colorScheme.primary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -157,7 +157,7 @@ class _CartScreenState extends State<CartScreen> {
                     height: 60,
                     child: ElevatedButton(
                       onPressed: CartManager.items.isEmpty 
-                          ? null // Wyłącza przycisk, jeśli koszyk jest pusty
+                          ? null
                           : () {
                               Navigator.push(
                                 context,
@@ -224,7 +224,6 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          // Informacje o produkcie i przyciski
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,5 @@
-name: product_repository
-description: The Repo that handles product operations.
+name: cart_item_repository
+description: The Repo that handles cart item operations.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.0.1
 

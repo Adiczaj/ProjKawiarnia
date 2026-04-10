@@ -10,16 +10,13 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // Kolorystyka
   final Color _bgColor = const Color(0xFFFCF7F3); 
   Color get _primaryBrown => Theme.of(context).colorScheme.primary; 
   final Color _cardBgColor = const Color(0xFFF6EFEA); 
 
-  // Stan wyboru
   late String _selectedDate;
   String _selectedTime = '';
 
-  // Zmienne z prawdziwymi datami
   late DateTime _todayDate;
   late DateTime _tomorrowDate;
   late String _todayStr;
@@ -52,7 +49,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _todayStr = _formatDate(_todayDate, 'Today');
     _tomorrowStr = _formatDate(_tomorrowDate, 'Tomorrow');
     
-    // Inteligentne ustawianie domyślnego dnia
+    // ustawianie domyślnego dnia
     if (!_isDayOff(_todayDate)) {
       _selectedDate = _todayStr;
     } else if (!_isDayOff(_tomorrowDate)) {
@@ -72,7 +69,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  // --- LOGIKA DAT I GODZIN ---
+  // LOGIKA DAT I GODZIN
 
   bool _isDayOff(DateTime date) {
     DateTime now = DateTime.now();
@@ -142,13 +139,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _pickCustomDate() async {
     DateTime now = DateTime.now();
     
-    // Zabezpieczenie: jeśli dzisiaj jest już zamknięte, kalendarz zaczyna się od jutra
+    // jeśli dzisiaj jest już zamknięte, kalendarz zaczyna się od jutra
     DateTime firstAllowedDate = _isDayOff(now) ? now.add(const Duration(days: 1)) : now;
 
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _getInitialCalendarDate(now), 
-      firstDate: firstAllowedDate, // Używamy naszej nowej, bezpiecznej daty
+      firstDate: firstAllowedDate,
       lastDate: now.add(const Duration(days: 5)), 
       selectableDayPredicate: (DateTime day) => !_isDayOff(day), 
       builder: (context, child) {
@@ -166,13 +163,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  // --- MATEMATYKA ZAMÓWIENIA ---
+  // MATEMATYKA ZAMÓWIENIA
   double get subtotal => CartManager.items.fold(0, (sum, item) => sum + (item['price'] * item['quantity']));
   double get shippingFee => CartManager.items.isEmpty ? 0.0 : 8.50;
   double get estimatedTax => subtotal * 0.05;
   double get totalAmount => subtotal + shippingFee + estimatedTax;
 
-  // --- WIDOK GŁÓWNY ---
+  // WIDOK GŁÓWNY
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,7 +301,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: _primaryBrown, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)), elevation: 5),
                 onPressed: (CartManager.items.isEmpty || _selectedTime.isEmpty) ? null : () {
-                  // Czyszczenie koszyka i przejście do animacji sukcesu
                   setState(() {
                     CartManager.items.clear();
                   });
@@ -325,7 +321,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // --- FUNKCJE WIDŻETÓW ---
+  // FUNKCJE WIDŻETÓW
 
   Widget _buildSectionCard({required IconData icon, required String title, required String actionText, required VoidCallback onActionTap, required Widget content}) {
     return Container(

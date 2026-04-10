@@ -1,8 +1,14 @@
+import 'package:cart_item_repository/cart_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:kawiarnia/screens/cart/cart_manager.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
+// ignore: implementation_imports
+import 'package:product_repository/src/models/product.dart';
 
 class DetailsScreen extends StatefulWidget {
-  const DetailsScreen({super.key});
+  final Product product;
+  const DetailsScreen(this.product, {super.key});
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -10,10 +16,19 @@ class DetailsScreen extends StatefulWidget {
 
 class _DetailsScreenState extends State<DetailsScreen> {
   int _quantity = 1;
-  final double _basePrice = 35.0;
-  
-  String _selectedSize = 'Medium';
+  String _selectedSize = 'Small';
   String _selectedSugar = 'No';
+  late String _selectedMilk; 
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product.milk == false) {
+      _selectedMilk = 'None';
+    } else {
+      _selectedMilk = 'Whole';
+    }
+  }
 
   final Color _bgColor = const Color(0xFFFCF7F3);
   Color get _primaryBrown => Theme.of(context).colorScheme.primary;
@@ -45,15 +60,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. DUŻE ZDJĘCIE Z ZAOKRĄGLONYMI ROGAMI (Styl z makiety)
+            // 1. DUŻE ZDJĘCIE Z ZAOKRĄGLONYMI ROGAMI
             ClipRRect(
               borderRadius: BorderRadius.circular(40),
               child: Container(
                 width: double.infinity,
                 height: 320,
                 color: const Color(0xFF3E2723),
-                child: Image.asset(
-                  'assets/caffe_latte.png',
+                child: Image.network(
+                  widget.product.link,
                   //fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.coffee,
@@ -66,9 +81,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
             const SizedBox(height: 24),
 
             // 2. TYTUŁ I CENA BAZOWA
-            const Text(
-              'Caffe Latte',
-              style: TextStyle(
+            Text(
+              widget.product.product,
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
                 color: Colors.black87,
@@ -76,7 +91,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '\$${_basePrice.toStringAsFixed(2)}',
+              '\$${widget.product.price.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -85,7 +100,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 3. THE EXPERIENCE (Opis w karcie)
+            // 3. OPIS
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -111,7 +126,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Nasza flagowa Caffe Latte to harmonijna mieszanka podwójnego espresso specialty i aksamitnej mikropianki. Stworzona z ziaren pochodzących z etiopskich wyżyn, oferuje subtelne nuty prażonych orzechów laskowych i madagaskarskiej wanilii, kończąc się kremowym, maślanym odczuciem w ustach.',
+                    widget.product.description,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade800,
@@ -123,7 +138,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 4. CUP SIZE (Zamiast pola tekstowego)
+            // 4. CUP SIZE
             _buildSectionTitle('CUP SIZE'),
             const SizedBox(height: 16),
             Row(
@@ -142,41 +157,37 @@ class _DetailsScreenState extends State<DetailsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                _buildOptionButton('No', _selectedSugar == 'No', () => setState(() => _selectedSugar = 'No')),
                 _buildOptionButton('Normal', _selectedSugar == 'Normal', () => setState(() => _selectedSugar = 'Normal')),
                 _buildOptionButton('Medium', _selectedSugar == 'Medium', () => setState(() => _selectedSugar = 'Medium')),
-                _buildOptionButton('No', _selectedSugar == 'No', () => setState(() => _selectedSugar = 'No')),
               ],
             ),
             const SizedBox(height: 30),
 
-            // 6. INFO GRID (Kalorie, Mleko, Czas, Pochodzenie - 4 kafelki)
-            Row(
-              children: [
-                Expanded(child: _buildInfoCard(Icons.bolt, 'CALORIES', '120 kcal')),
-                const SizedBox(width: 16),
-                Expanded(child: _buildInfoCard(Icons.water_drop_outlined, 'MILK', 'Whole')),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildInfoCard(Icons.timer_outlined, 'PREP TIME', '4-6 mins')),
-                const SizedBox(width: 16),
-                Expanded(child: _buildInfoCard(Icons.public, 'ORIGIN', 'Ethiopia')),
-              ],
-            ),
-            const SizedBox(height: 100), // Duży odstęp, aby pływający pasek nic nie zasłaniał
+            // 6. MILK TYPE (Tylko jeśli produkt ma opcję mleka)
+            if (widget.product.milk) ...[
+              _buildSectionTitle('MILK TYPE'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildOptionButton('Whole', _selectedMilk == 'Whole', () => setState(() => _selectedMilk = 'Whole')),
+                  _buildOptionButton('Oat', _selectedMilk == 'Oat', () => setState(() => _selectedMilk = 'Oat')),
+                  _buildOptionButton('Soy', _selectedMilk == 'Soy', () => setState(() => _selectedMilk = 'Soy')),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
           ],
         ),
       ),
 
-      // 7. PŁYWAJĄCY DOLNY PASEK Z MAKIETY (Pływający Licznik i Przycisk "Add")
+      // 7. PŁYWAJĄCY DOLNY PASEK
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
           color: _bgColor,
-          // Dodajemy delikatny cień/gradient u góry, aby pasek oddzielał się od przewijanej treści
           boxShadow: [
             BoxShadow(
               // ignore: deprecated_member_use
@@ -188,7 +199,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ),
         child: Row(
           children: [
-            // Kontroler ilości (Zupełnie nowa logika i wygląd ze zdjęcia)
             Container(
               height: 55,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -227,7 +237,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(width: 16),
             
-            // Przycisk "Add To Cart" z makiety
+            // Przycisk "Add To Cart"
             Expanded(
               child: SizedBox(
                 height: 55,
@@ -240,29 +250,32 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     elevation: 5,
                   ),
                   onPressed: () {
-                    final newItem = {
-                      'name': 'Caffe Latte',
-                      'subtitle': 'Size: $_selectedSize, Sugar: $_selectedSugar', 
-                      'price': _basePrice,
-                      'quantity': _quantity,
-                      'image': 'assets/caffe_latte.png',
-                    };
+                    // 1. POBIERAMY STATUS LOGOWANIA I ID UŻYTKOWNIKA
+                    final authState = context.read<AuthenticationBloc>().state;
+                    
+                    if (authState.status != AuthenticationStatus.authenticated) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Musisz być zalogowany, aby dodać do koszyka!')),
+                      );
+                      return;
+                    }
 
-                    // Szukamy po nazwie I wybranym zestawie opcji (żeby Small Latte i Large Latte były osobnymi pozycjami w koszyku)
-                    final existingItemIndex = CartManager.items.indexWhere(
-                        (item) => item['name'] == newItem['name'] && item['subtitle'] == newItem['subtitle']);
-
-                    setState(() {
-                      if (existingItemIndex >= 0) {
-                        CartManager.items[existingItemIndex]['quantity'] += _quantity;
-                      } else {
-                        CartManager.items.add(newItem);
-                      }
-                    });
-
+                    final String userId = authState.user!.userId;
+                    final newItem = CartItem(
+                      cartId: '',
+                      productId: widget.product.productId, 
+                      product: widget.product.product,
+                      link: widget.product.link,
+                      price: widget.product.price,
+                      quantity: _quantity,
+                      size: _selectedSize,
+                      sugar: _selectedSugar,
+                      milk: _selectedMilk, 
+                    );
+                    context.read<CartBloc>().add(AddProductToCart(userId, newItem));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Added $_quantity to cart!'),
+                        content: Text('Dodano $_quantity ${widget.product.product} do koszyka!'),
                         backgroundColor: _primaryBrown,
                         duration: const Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
@@ -279,9 +292,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       const SizedBox(width: 16),
-                      // DYNAMICZNA CENA
                       Text(
-                        '\$${(_basePrice * _quantity).toStringAsFixed(2)}',
+                        '\$${(widget.product.price * _quantity).toStringAsFixed(2)}',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ],
@@ -295,7 +307,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
-  // Pomocnicza: Tytuł sekcji (CUP SIZE, SUGAR LEVEL)
+  // Pomocnicza: Tytuł sekcji (CUP SIZE, SUGAR LEVEL, MILK TYPE)
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -308,7 +320,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
-  // Pomocnicza: Przycisk wyboru (Owalny, ze zdjęcia)
+  // Pomocnicza: Przycisk wyboru
   Widget _buildOptionButton(String text, bool isSelected, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
@@ -317,7 +329,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent, // Biały tylko gdy wybrany
+            color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
               color: isSelected ? _primaryBrown : Colors.grey.shade300,
@@ -334,32 +346,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // Pomocnicza: Kafelki z siatki informacji (Info Grid)
-  Widget _buildInfoCard(IconData icon, String title, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: _cardBgColor,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: _primaryBrown, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
-          ),
-        ],
       ),
     );
   }
