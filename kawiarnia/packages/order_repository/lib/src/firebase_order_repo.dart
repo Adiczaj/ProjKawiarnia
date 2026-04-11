@@ -39,14 +39,26 @@ class FirebaseOrderRepo implements OrderRepo {
 
   @override
   Stream<List<Order>> getOrders(String userId) {
+    log('Pobieranie zamówień dla userId: $userId');
     return orderCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true) 
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Order.fromEntity(OrderEntity.fromDocument(doc.data())))
+      log('Otrzymano ${snapshot.docs.length} zamówień');
+      final orders = snapshot.docs
+          .map((doc) {
+            try {
+              return Order.fromEntity(OrderEntity.fromDocument(doc.data()));
+            } catch (e) {
+              log('Błąd konwersji zamówienia: $e');
+              rethrow;
+            }
+          })
           .toList();
+      
+      // Sortujemy lokalnie po createdAt (malejąco)
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
     });
   }
 }

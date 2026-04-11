@@ -69,7 +69,7 @@ class _CartScreenState extends State<CartScreen> {
           }
 
           if (state is CartFailure) {
-            return Center(child: Text('Wystąpił błąd: ${state.errorMessage}'));
+            return Center(child: Text('An error occurred: ${state.errorMessage}'));
           }
 
           if (state is CartLoaded) {
@@ -82,7 +82,7 @@ class _CartScreenState extends State<CartScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Twój Koszyk',
+                    'Your Cart',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -91,7 +91,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Przejrzyj swoje zamówienie',
+                    'Review your order',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                   const SizedBox(height: 24),
@@ -106,7 +106,7 @@ class _CartScreenState extends State<CartScreen> {
                             Icon(Icons.shopping_basket_outlined, size: 80, color: Colors.grey.shade400),
                             const SizedBox(height: 16),
                             Text(
-                              'Twój koszyk jest pusty',
+                              'Your cart is empty',
                               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                             ),
                           ],
@@ -138,7 +138,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           child: const TextField(
                             decoration: InputDecoration(
-                              hintText: 'Kod promocyjny',
+                              hintText: 'Promo Code',
                               hintStyle: TextStyle(color: Colors.grey),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -160,7 +160,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           minimumSize: const Size(100, 50),
                         ),
-                        child: const Text('Zastosuj', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -175,11 +175,11 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildSummaryRow('Suma częściowa', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
+                        _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
                         const SizedBox(height: 12),
-                        _buildSummaryRow('Dostawa', deliveryFee == 0 ? 'DARMOWA' : '\$${deliveryFee.toStringAsFixed(2)}', isBold: false, valueColor: Theme.of(context).colorScheme.primary),
+                        _buildSummaryRow('Shipping', deliveryFee == 0 ? 'FREE' : '\$${deliveryFee.toStringAsFixed(2)}', isBold: false, valueColor: Theme.of(context).colorScheme.primary),
                         const Divider(height: 30, thickness: 1),
-                        _buildSummaryRow('Razem', '\$${(subtotal + deliveryFee).toStringAsFixed(2)}', isBold: true, fontSize: 22),
+                        _buildSummaryRow('Total', '\$${(subtotal + deliveryFee).toStringAsFixed(2)}', isBold: true, fontSize: 22),
                         const SizedBox(height: 20),
                         
                         // Przycisk "Przejdź do kasy"
@@ -218,7 +218,7 @@ class _CartScreenState extends State<CartScreen> {
                               elevation: items.isEmpty ? 0 : 5,
                             ),
                             child: const Text(
-                              'Przejdź do kasy',
+                              'Proceed to Checkout',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
@@ -280,7 +280,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rozmiar: ${item.size}, Mleko: ${item.milk}, Cukier: ${item.sugar}',
+                  'Size: ${item.size}, Milk: ${item.milk}, Sugar: ${item.sugar}',
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

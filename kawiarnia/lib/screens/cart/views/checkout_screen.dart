@@ -355,9 +355,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             totalAmount: totalAmount,
                             createdAt: DateTime.now(),
                             deliveryDate: actualDeliveryDate, 
-                            deliveryMethod: 'Dostawa', 
+                            deliveryMethod: 'Delivery', 
                             deliverySlot: _selectedTime, 
-                            status: 'Oczekujące', 
+                            status: 'Received', 
                             items: orderItems,
                           );
 

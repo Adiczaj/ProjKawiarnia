@@ -256,7 +256,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     
                     if (authState.status != AuthenticationStatus.authenticated) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Musisz być zalogowany, aby dodać do koszyka!')),
+                        const SnackBar(content: Text('You must be logged in to add items to the cart!')),
                       );
                       return;
                     }
@@ -276,7 +276,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     context.read<CartBloc>().add(AddProductToCart(userId, newItem));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Dodano $_quantity ${widget.product.product} do koszyka!'),
+                        content: Text('Added $_quantity ${widget.product.product} to cart!'),
                         backgroundColor: _primaryBrown,
                         duration: const Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
