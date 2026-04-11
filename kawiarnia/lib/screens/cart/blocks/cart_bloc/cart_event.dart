@@ -43,3 +43,24 @@ class AddProductToCart extends CartEvent {
   @override
   List<Object> get props => [userId, item];
 }
+
+class UpdateItemQuantity extends CartEvent {
+  final String userId;
+  final String cartItemId;
+  final int newQuantity;
+
+  const UpdateItemQuantity(this.userId, this.cartItemId, this.newQuantity);
+
+  @override
+  List<Object> get props => [userId, cartItemId, newQuantity];
+}
+
+class RemoveItemFromCart extends CartEvent {
+  final String userId;
+  final String cartItemId;
+
+  const RemoveItemFromCart(this.userId, this.cartItemId);
+
+  @override
+  List<Object> get props => [userId, cartItemId];
+}

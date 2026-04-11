@@ -24,7 +24,9 @@ dependencies:
     path: packages/product_repository
   cart_item_repository:
     path: packages/cart_item_repository
-    
+  order_repository:
+    path: packages/order_repository
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kawiarnia/screens/cart/cart_manager.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
+import 'package:kawiarnia/screens/cart/blocks/order_bloc/order_bloc.dart';
+import 'package:order_repository/order_repository.dart';
+
 import 'order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -32,12 +37,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // Lista świąt, w które kawiarnia jest zamknięta
   final List<DateTime> _holidays = [
-    DateTime(2026, 5, 1),   // Święto Pracy
-    DateTime(2026, 5, 3),   // Święto Konstytucji 3 Maja
-    DateTime(2026, 11, 1),  // Wszystkich Świętych
-    DateTime(2026, 11, 11), // Święto Niepodległości
-    DateTime(2026, 12, 25), // Boże Narodzenie
-    DateTime(2026, 12, 26), // Drugi dzień świąt
+    DateTime(2026, 5, 1),   
+    DateTime(2026, 5, 3),   
+    DateTime(2026, 11, 1),  
+    DateTime(2026, 11, 11), 
+    DateTime(2026, 12, 25), 
+    DateTime(2026, 12, 26), 
   ];
 
   @override
@@ -49,7 +54,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _todayStr = _formatDate(_todayDate, 'Today');
     _tomorrowStr = _formatDate(_tomorrowDate, 'Tomorrow');
     
-    // ustawianie domyślnego dnia
+    // domyslny dzien
     if (!_isDayOff(_todayDate)) {
       _selectedDate = _todayStr;
     } else if (!_isDayOff(_tomorrowDate)) {
@@ -60,7 +65,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     _selectedTime = _getFirstAvailableTime();
 
-    // Jeśli dzisiaj minęły już wszystkie godziny pracujące, automatycznie przeskocz na jutro
     if (_selectedTime.isEmpty && _selectedDate == _todayStr) {
       if (!_isDayOff(_tomorrowDate)) {
         _selectedDate = _tomorrowStr;
@@ -69,31 +73,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  // LOGIKA DAT I GODZIN
-
   bool _isDayOff(DateTime date) {
     DateTime now = DateTime.now();
-
-    // 1. Sprawdzamy, czy sprawdzana data to "dzisiaj" i czy minęły już godziny pracy
     if (date.year == now.year && date.month == now.month && date.day == now.day) {
-      // Wyciągamy godzinę startu z ostatniego elementu na liście (np. '18' z '18:00 - 19:00')
       int lastSlotStartHour = int.parse(_timeSlots.last.substring(0, 2));
-      
       if (now.hour >= lastSlotStartHour) {
-        return true; // Dzisiaj jest już "zamknięte", traktujemy jak dzień wolny
+        return true; 
       }
     }
-
-    // 2. Sprawdzamy niedziele
     if (date.weekday == DateTime.sunday) return true;
-
-    // 3. Sprawdzamy listę świąt
     for (DateTime holiday in _holidays) {
-      if (date.year == holiday.year && date.month == holiday.month && date.day == holiday.day) {
-        return true;
-      }
+      if (date.year == holiday.year && date.month == holiday.month && date.day == holiday.day) return true;
     }
-    
     return false;
   }
 
@@ -107,13 +98,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       int currentHour = DateTime.now().hour;
       for (String slot in _timeSlots) {
         int startHour = int.parse(slot.substring(0, 2));
-        if (startHour > currentHour) {
-          return slot;
-        }
+        if (startHour > currentHour) return slot;
       }
-      return ''; // Jeśli brak dostępnych godzin dzisiaj
+      return ''; 
     }
-    return _timeSlots.first; // W inny dzień zawsze pierwsza godzina z listy
+    return _timeSlots.first; 
   }
 
   void _onDateChanged(String newDate) {
@@ -138,8 +127,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _pickCustomDate() async {
     DateTime now = DateTime.now();
-    
-    // jeśli dzisiaj jest już zamknięte, kalendarz zaczyna się od jutra
     DateTime firstAllowedDate = _isDayOff(now) ? now.add(const Duration(days: 1)) : now;
 
     DateTime? picked = await showDatePicker(
@@ -163,12 +150,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  // MATEMATYKA ZAMÓWIENIA
-  double get subtotal => CartManager.items.fold(0, (sum, item) => sum + (item['price'] * item['quantity']));
-  double get shippingFee => CartManager.items.isEmpty ? 0.0 : 8.50;
-  double get estimatedTax => subtotal * 0.05;
-  double get totalAmount => subtotal + shippingFee + estimatedTax;
-
   // WIDOK GŁÓWNY
   @override
   Widget build(BuildContext context) {
@@ -182,146 +163,224 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('UniBrew', style: TextStyle(color: _primaryBrown, fontWeight: FontWeight.bold, fontSize: 20, fontStyle: FontStyle.italic)),
+            Text('Clockwork Coffee', style: TextStyle(color: _primaryBrown, fontWeight: FontWeight.bold, fontSize: 20, fontStyle: FontStyle.italic)),
             const SizedBox(width: 8),
             const Text('CHECKOUT', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(radius: 16, backgroundImage: const AssetImage('assets/profile_avatar.png'), backgroundColor: Colors.grey.shade300),
-          ),
-        ],
+        
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Review\nOrder', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: _primaryBrown, height: 1.1)),
-            const SizedBox(height: 12),
-            Text('One final check before your sensory\nexperience arrives.', style: TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4)),
-            const SizedBox(height: 30),
+      
+      body: BlocListener<OrderBloc, OrderState>(
+        listener: (context, state) {
+          if (state is OrderLoading) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            );
+          } else if (state is OrderSuccess) {
+            Navigator.pop(context); 
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const OrderSuccessScreen()),
+            );
+          } else if (state is OrderFailure) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage)),
+            );
+          }
+        },
+        child: BlocBuilder<CartBloc, CartState>(
+          builder: (context, state) {
+          
+          if (state is CartLoading || state is CartInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // ADRES DOSTAWY
-            _buildSectionCard(
-              icon: Icons.local_shipping, title: 'Delivery Address', actionText: 'EDIT', onActionTap: () {},
-              content: Column(
+          if (state is CartFailure) {
+            return Center(child: Text('Błąd pobierania koszyka: ${state.errorMessage}'));
+          }
+
+          if (state is CartLoaded) {
+            final items = state.items;
+            
+            final double totalBrutto = state.totalPrice; 
+            final double subtotal = totalBrutto / 1.23;
+            final double estimatedTax = totalBrutto - subtotal;
+            final double shippingFee = items.isEmpty ? 0.0 : 8.50;
+            final double totalAmount = totalBrutto + shippingFee;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Julianna Thorne', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                  const SizedBox(height: 4),
-                  Text('882 Aromatic Lane, Suite 4\nPortland, OR 97201', style: TextStyle(color: Colors.grey.shade700, height: 1.5)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                  Text('Review\nOrder', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: _primaryBrown, height: 1.1)),
+                  const SizedBox(height: 12),
+                  Text('One final check before your sensory\nexperience arrives.', style: TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4)),
+                  const SizedBox(height: 30),
 
-            // CZAS DOSTAWY
-            _buildSectionCard(
-              icon: Icons.access_time_filled, title: 'Delivery Time', actionText: 'RESET',
-              onActionTap: () {
-                if (!_isDayOff(_todayDate)) {
-                  _onDateChanged(_todayStr);
-                  if (_selectedTime.isEmpty && !_isDayOff(_tomorrowDate)) {
-                    _onDateChanged(_tomorrowStr); 
-                  }
-                }
-              },
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                  // ADRES DOSTAWY
+                  _buildSectionCard(
+                    icon: Icons.local_shipping, title: 'Delivery Address', actionText: 'EDIT', onActionTap: () {},
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDatePill(_todayStr, _todayDate),
-                        const SizedBox(width: 8),
-                        _buildDatePill(_tomorrowStr, _tomorrowDate),
-                        const SizedBox(width: 8),
-                        _buildSelectDatePill(),
+                        const Text('Julianna Thorne', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                        const SizedBox(height: 4),
+                        Text('882 Aromatic Lane, Suite 4\nPortland, OR 97201', style: TextStyle(color: Colors.grey.shade700, height: 1.5)),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: _timeSlots.map((time) => _buildTimePill(time)).toList(),
+                  const SizedBox(height: 16),
+
+                  // CZAS DOSTAWY
+                  _buildSectionCard(
+                    icon: Icons.access_time_filled, title: 'Delivery Time', actionText: 'RESET',
+                    onActionTap: () {
+                      if (!_isDayOff(_todayDate)) {
+                        _onDateChanged(_todayStr);
+                        if (_selectedTime.isEmpty && !_isDayOff(_tomorrowDate)) {
+                          _onDateChanged(_tomorrowStr); 
+                        }
+                      }
+                    },
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildDatePill(_todayStr, _todayDate),
+                              const SizedBox(width: 8),
+                              _buildDatePill(_tomorrowStr, _tomorrowDate),
+                              const SizedBox(width: 8),
+                              _buildSelectDatePill(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _timeSlots.map((time) => _buildTimePill(time)).toList(),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // PŁATNOŚĆ
+                  _buildSectionCard(
+                    icon: Icons.payments, title: 'Payment Method', actionText: 'CHANGE', onActionTap: () {},
+                    content: Row(
+                      children: [
+                        Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: const Icon(Icons.apple, color: Colors.black, size: 20)),
+                        const SizedBox(width: 12),
+                        const Text('Apple Pay (•••• 9012)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // KOSZYK
+                  const Text('YOUR SELECTION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.black54)),
+                  const SizedBox(height: 16),
+                  
+                  if (items.isEmpty)
+                    Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Center(child: Text('Twoje zamówienie jest puste.', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))))
+                  else
+                    ...items.map((item) => _buildCartItem(
+                      item.product, 
+                      'Rozmiar: ${item.size}, Mleko: ${item.milk}, Cukier: ${item.sugar}', 
+                      item.price, 
+                      item.quantity, 
+                      item.link
+                    )),
+                    
+                  const SizedBox(height: 24),
+
+                  // PODSUMOWANIE
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(color: _cardBgColor, borderRadius: BorderRadius.circular(30)),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
+                        const SizedBox(height: 12),
+                        _buildSummaryRow('Shipping (Express)', '\$${shippingFee.toStringAsFixed(2)}', isBold: false),
+                        const SizedBox(height: 12),
+                        _buildSummaryRow('Estimated Tax', '\$${estimatedTax.toStringAsFixed(2)}', isBold: false),
+                        const Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: Divider(color: Colors.black12, thickness: 1)),
+                        _buildSummaryRow('Total Amount', '\$${totalAmount.toStringAsFixed(2)}', isBold: true, valueSize: 24, valueColor: _primaryBrown),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // PRZYCISK FINALIZACJI
+                  SizedBox(
+                    width: double.infinity, height: 60,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: _primaryBrown, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)), elevation: 5),
+                      onPressed: (items.isEmpty || _selectedTime.isEmpty) ? null : () {
+                       final authState = context.read<AuthenticationBloc>().state;
+                          final String userId = (authState.status == AuthenticationStatus.authenticated) 
+                              ? authState.user!.userId 
+                              : '';
+                          final List<Items> orderItems = items.map((item) => Items(
+                            productId: item.productId, 
+                            product: item.product,
+                            link: item.link,
+                            price: item.price,
+                            quantity: item.quantity,
+                            size: item.size,
+                            sugar: item.sugar,
+                            milk: item.milk,
+                          )).toList();
+
+                          DateTime actualDeliveryDate = _todayDate;
+                          if (_selectedDate == _tomorrowStr) {
+                            actualDeliveryDate = _tomorrowDate;
+                          } else if (_selectedDate != _todayStr) {
+                            actualDeliveryDate = DateTime.now().add(const Duration(days: 2)); 
+                          }
+
+                          final order = Order(
+                            orderId: '',
+                            userId: userId,
+                            totalAmount: totalAmount,
+                            createdAt: DateTime.now(),
+                            deliveryDate: actualDeliveryDate, 
+                            deliveryMethod: 'Dostawa', 
+                            deliverySlot: _selectedTime, 
+                            status: 'Oczekujące', 
+                            items: orderItems,
+                          );
+
+                          context.read<OrderBloc>().add(SubmitOrder(userId, order));
+                      },
+                      child: const Text('Place Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Center(child: Text('SECURE ENCRYPTED TRANSACTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2))),
+                  const SizedBox(height: 40),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // PŁATNOŚĆ
-            _buildSectionCard(
-              icon: Icons.payments, title: 'Payment Method', actionText: 'CHANGE', onActionTap: () {},
-              content: Row(
-                children: [
-                  Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: const Icon(Icons.apple, color: Colors.black, size: 20)),
-                  const SizedBox(width: 12),
-                  const Text('Apple Pay (•••• 9012)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // KOSZYK
-            const Text('YOUR SELECTION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.black54)),
-            const SizedBox(height: 16),
-            if (CartManager.items.isEmpty)
-              Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Center(child: Text('Twoje zamówienie jest puste.', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))))
-            else
-              ...CartManager.items.map((item) => _buildCartItem(item['name'], item['subtitle'], item['price'], item['quantity'], item['image'])),
-            const SizedBox(height: 24),
-
-            // PODSUMOWANIE
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: _cardBgColor, borderRadius: BorderRadius.circular(30)),
-              child: Column(
-                children: [
-                  _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
-                  const SizedBox(height: 12),
-                  _buildSummaryRow('Shipping (Express)', '\$${shippingFee.toStringAsFixed(2)}', isBold: false),
-                  const SizedBox(height: 12),
-                  _buildSummaryRow('Estimated Tax', '\$${estimatedTax.toStringAsFixed(2)}', isBold: false),
-                  const Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: Divider(color: Colors.black12, thickness: 1)),
-                  _buildSummaryRow('Total Amount', '\$${totalAmount.toStringAsFixed(2)}', isBold: true, valueSize: 24, valueColor: _primaryBrown),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // PRZYCISK FINALIZACJI
-            SizedBox(
-              width: double.infinity, height: 60,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: _primaryBrown, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)), elevation: 5),
-                onPressed: (CartManager.items.isEmpty || _selectedTime.isEmpty) ? null : () {
-                  setState(() {
-                    CartManager.items.clear();
-                  });
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OrderSuccessScreen()),
-                  );
-                },
-                child: const Text('Place Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Center(child: Text('SECURE ENCRYPTED TRANSACTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2))),
-            const SizedBox(height: 40),
-          ],
-        ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
+      )
     );
   }
 
-  // FUNKCJE WIDŻETÓW
+  // WIDŻETY POMOCNICZE W ŚRODKU
 
   Widget _buildSectionCard({required IconData icon, required String title, required String actionText, required VoidCallback onActionTap, required Widget content}) {
     return Container(
@@ -369,7 +428,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: isOff ? Colors.grey.shade400 : (isSelected ? Colors.white : Colors.black87),
-            decoration: isOff ? TextDecoration.lineThrough : null, // Przekreśla zamknięte dni
+            decoration: isOff ? TextDecoration.lineThrough : null, 
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
             height: 1.3,
@@ -425,7 +484,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               color: isPast ? Colors.grey.shade400 : isSelected ? Colors.white : Colors.black87, 
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              decoration: isPast ? TextDecoration.lineThrough : null, // Przekreśla minione godziny
+              decoration: isPast ? TextDecoration.lineThrough : null, 
             )
           ),
         ),
@@ -441,7 +500,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 5))]),
       child: Row(
         children: [
-          ClipRRect(borderRadius: BorderRadius.circular(16), child: Container(width: 70, height: 70, color: const Color(0xFF3E2723), child: Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.coffee, color: Colors.white54)))),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16), 
+            child: Container(
+              width: 70, height: 70, color: const Color(0xFF3E2723), 
+              child: Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.coffee, color: Colors.white54))
+            )
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

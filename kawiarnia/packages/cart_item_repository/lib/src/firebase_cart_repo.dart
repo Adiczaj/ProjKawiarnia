@@ -39,11 +39,38 @@ class FirebaseCartRepo implements CartRepo {
   }
 
   @override
+  Future<void> updateQuantity(String userId, String cartItemId, int newQuantity) async {
+    try {
+      await userCollection
+          .doc(userId)
+          .collection('cart')
+          .doc(cartItemId)
+          .update({'quantity': newQuantity});
+    } catch (e) {
+      log("Błąd aktualizacji ilości: $e");
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeFromCart(String userId, String cartItemId) async {
+    try {
+      await userCollection
+          .doc(userId)
+          .collection('cart')
+          .doc(cartItemId)
+          .delete();
+    } catch (e) {
+      log("Błąd usuwania z koszyka: $e");
+      rethrow;
+    }
+  }
+
+  @override
   Stream<List<CartItem>> getCart(String userId) {
     return userCollection
         .doc(userId)
         .collection('cart')
-        .orderBy('createdAt', descending: false)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs

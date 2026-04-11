@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
+
 // ignore: implementation_imports
 import 'package:product_repository/src/models/product.dart';
 
@@ -47,7 +48,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Sensory Brew',
+          'Clockwork Coffee',
           style: TextStyle(
             color: _primaryBrown,
             fontWeight: FontWeight.bold,

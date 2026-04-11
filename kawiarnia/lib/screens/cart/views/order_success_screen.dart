@@ -74,7 +74,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Your sensory experience is being prepared\nand will arrive shortly.',
+                      'Your sensory experience is being prepared\nand will arrive on time.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,

@@ -43,8 +43,27 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<AddProductToCart>((event, emit) async {
       try {
         await _cartRepo.addToCart(event.userId, event.item);
+        add(LoadCart(event.userId));
       } catch (e) {
         emit(const CartFailure("Nie udało się dodać produktu do koszyka."));
+      }
+    });
+
+    on<UpdateItemQuantity>((event, emit) async {
+      try {
+        await _cartRepo.updateQuantity(event.userId, event.cartItemId, event.newQuantity);
+        //add(LoadCart(event.userId));
+      } catch (e) {
+        emit(const CartFailure("Nie udało się zaktualizować ilości."));
+      }
+    });
+
+    on<RemoveItemFromCart>((event, emit) async {
+      try {
+        await _cartRepo.removeFromCart(event.userId, event.cartItemId);
+        //add(LoadCart(event.userId));
+      } catch (e) {
+        emit(const CartFailure("Nie udało się usunąć produktu."));
       }
     });
   }

@@ -16,13 +16,13 @@ class HomeScreen extends StatelessWidget {
           title: Row(
             children: [
               Image.asset('assets/logo.png', scale: 7.5),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Text(
-                'Kawiarnia',
+                'Clockwork Coffee',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 32.5,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
