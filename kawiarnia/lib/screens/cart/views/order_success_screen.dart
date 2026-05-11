@@ -6,17 +6,15 @@ class OrderSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryBrown = Theme.of(context).colorScheme.primary;
-    const Color bgColor = Color(0xFFFCF7F3);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 1. Sprężysta animacja ikony sukcesu
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 1000),
@@ -51,7 +49,6 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // 2. Animacja pojawiania się tekstu
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 800),
@@ -87,7 +84,6 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 60),
 
-              // 3. Przycisk powrotu do Menu
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 1200),
@@ -113,7 +109,6 @@ class OrderSuccessScreen extends StatelessWidget {
                       elevation: 5,
                     ),
                     onPressed: () {
-                      // Wraca do samego początku aplikacji
                       Navigator.popUntil(context, (route) => route.isFirst);
                     },
                     child: const Text(

@@ -17,7 +17,7 @@ class DetailsScreen extends StatefulWidget {
 
 class _DetailsScreenState extends State<DetailsScreen> {
   int _quantity = 1;
-  String _selectedSize = 'Small';
+  String _selectedSize = 'Medium';
   String _selectedSugar = 'No';
   late String _selectedMilk; 
 
@@ -31,9 +31,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
     }
   }
 
-  final Color _bgColor = const Color(0xFFFCF7F3);
+  Color get _bgColor => Theme.of(context).colorScheme.surface;
   Color get _primaryBrown => Theme.of(context).colorScheme.primary;
   final Color _cardBgColor = const Color(0xFFF6EFEA);
+
+  double get _currentPrice {
+    double basePrice = widget.product.price;
+    if (_selectedSize == 'Small') {
+      return basePrice - 1.00;
+    } else if (_selectedSize == 'Large') {
+      return basePrice + 0.50;
+    }
+    if (_selectedMilk == 'Oat') {
+      basePrice += 0.70;
+    } else if (_selectedMilk == 'Soy') {
+      basePrice += 0.50;
+    }
+    return basePrice;
+  }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +78,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. DUŻE ZDJĘCIE Z ZAOKRĄGLONYMI ROGAMI
             ClipRRect(
               borderRadius: BorderRadius.circular(40),
               child: Container(
@@ -81,7 +97,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 2. TYTUŁ I CENA BAZOWA
             Text(
               widget.product.product,
               style: const TextStyle(
@@ -92,7 +107,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '\$${widget.product.price.toStringAsFixed(2)}',
+              '\$${_currentPrice.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -101,7 +116,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 3. OPIS
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -139,7 +153,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 4. CUP SIZE
             _buildSectionTitle('CUP SIZE'),
             const SizedBox(height: 16),
             Row(
@@ -152,7 +165,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 5. SUGAR LEVEL
             _buildSectionTitle('SUGAR LEVEL'),
             const SizedBox(height: 16),
             Row(
@@ -165,7 +177,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 6. MILK TYPE (Tylko jeśli produkt ma opcję mleka)
             if (widget.product.milk) ...[
               _buildSectionTitle('MILK TYPE'),
               const SizedBox(height: 16),
@@ -183,7 +194,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ),
       ),
 
-      // 7. PŁYWAJĄCY DOLNY PASEK
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -238,7 +248,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(width: 16),
             
-            // Przycisk "Add To Cart"
             Expanded(
               child: SizedBox(
                 height: 55,
@@ -251,7 +260,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     elevation: 5,
                   ),
                   onPressed: () {
-                    // 1. POBIERAMY STATUS LOGOWANIA I ID UŻYTKOWNIKA
                     final authState = context.read<AuthenticationBloc>().state;
                     
                     if (authState.status != AuthenticationStatus.authenticated) {
@@ -267,7 +275,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       productId: widget.product.productId, 
                       product: widget.product.product,
                       link: widget.product.link,
-                      price: widget.product.price,
+                      price: _currentPrice,
                       quantity: _quantity,
                       size: _selectedSize,
                       sugar: _selectedSugar,
@@ -294,7 +302,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       ),
                       const SizedBox(width: 16),
                       Text(
-                        '\$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+                        '\$${(_currentPrice * _quantity).toStringAsFixed(2)}',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ],
@@ -308,7 +316,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
-  // Pomocnicza: Tytuł sekcji (CUP SIZE, SUGAR LEVEL, MILK TYPE)
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -321,7 +328,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
-  // Pomocnicza: Przycisk wyboru
   Widget _buildOptionButton(String text, bool isSelected, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(

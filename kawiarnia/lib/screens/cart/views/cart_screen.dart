@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
 import 'package:kawiarnia/screens/cart/blocks/order_bloc/order_bloc.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:kawiarnia/screens/cart/views/checkout_screen.dart';
 import 'package:order_repository/order_repository.dart';
@@ -16,12 +18,13 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final double deliveryFee = 0.00;
+
+  final TextEditingController _promoController = TextEditingController();
+  double _discountPercent = 0.0;
 
   @override
   void initState() {
     super.initState();
-    // Załaduj koszyk gdy ekran się załaduje
     final authState = context.read<AuthenticationBloc>().state;
     if (authState.status == AuthenticationStatus.authenticated) {
       final userId = authState.user!.userId;
@@ -37,9 +40,8 @@ class _CartScreenState extends State<CartScreen> {
         : '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       
-      // Górny pasek
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -74,7 +76,12 @@ class _CartScreenState extends State<CartScreen> {
 
           if (state is CartLoaded) {
             final items = state.items;
-            final subtotal = state.totalPrice;
+            final double originalSubtotal = state.totalPrice;
+            final double discountAmount = originalSubtotal * _discountPercent;
+            final double subtotalAfterDiscount = originalSubtotal - discountAmount;
+
+            final double deliveryFee = items.isEmpty ? 0.0 : (subtotalAfterDiscount >= 25.0 ? 0.0 : 3.0);
+            final double totalAmount = subtotalAfterDiscount + deliveryFee;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -90,13 +97,12 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Review your order',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   const SizedBox(height: 24),
 
-                  // Sprawdzamy, czy koszyk jest pusty
                   if (items.isEmpty)
                     Center(
                       child: Padding(
@@ -114,7 +120,6 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     )
                   else
-                    // Lista produktów w koszyku
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -126,7 +131,6 @@ class _CartScreenState extends State<CartScreen> {
                   
                   const SizedBox(height: 16),
 
-                  // Sekcja kodu promocyjnego
                   Row(
                     children: [
                       Expanded(
@@ -136,8 +140,9 @@ class _CartScreenState extends State<CartScreen> {
                             color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          child: const TextField(
-                            decoration: InputDecoration(
+                          child: TextField(
+                            controller: _promoController,
+                            decoration: const InputDecoration(
                               hintText: 'Promo Code',
                               hintStyle: TextStyle(color: Colors.grey),
                               border: InputBorder.none,
@@ -148,8 +153,56 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
-                        onPressed: () {
-                          // Logika kodu promocyjnego
+                        onPressed: () async {
+                          final enteredCode = _promoController.text.trim().toUpperCase();
+                          
+                          if (enteredCode.isEmpty) return;
+
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                          );
+
+                          try {
+                            final docSnapshot = await FirebaseFirestore.instance
+                                .collection('promo_codes')
+                                .doc(enteredCode)
+                                .get();
+
+                            if (mounted) Navigator.pop(context);
+
+                            if (docSnapshot.exists && docSnapshot.data()?['isActive'] == true) {
+                              final double dbDiscount = (docSnapshot.data()?['discountPercent'] ?? 0.0).toDouble();
+
+                              setState(() {
+                                _discountPercent = dbDiscount;
+                              });
+
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Zastosowano rabat ${(dbDiscount * 100).toInt()}%!'), backgroundColor: Colors.green),
+                                );
+                              }
+                            } else {
+                              setState(() {
+                                _discountPercent = 0.0;
+                              });
+                              
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Nieprawidłowy lub nieaktywny kod promocyjny.'), backgroundColor: Colors.red),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) Navigator.pop(context); 
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Błąd podczas sprawdzania kodu.'), backgroundColor: Colors.red),
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF3CFC6),
@@ -166,7 +219,6 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Podsumowanie kosztów
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -175,14 +227,19 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
-                        const SizedBox(height: 12),
-                        _buildSummaryRow('Shipping', deliveryFee == 0 ? 'FREE' : '\$${deliveryFee.toStringAsFixed(2)}', isBold: false, valueColor: Theme.of(context).colorScheme.primary),
+                        _buildSummaryRow('Subtotal', '\$${originalSubtotal.toStringAsFixed(2)}', isBold: false),
+                        if (_discountPercent > 0) ...[
+                          const SizedBox(height: 12),
+                          _buildSummaryRow('Discount (${(_discountPercent * 100).toInt()}%)', '-\$${discountAmount.toStringAsFixed(2)}', isBold: false, valueColor: Theme.of(context).colorScheme.primary),
+                        ],
+                        _buildSummaryRow('Shipping', 
+                          deliveryFee == 0.0 ? 'FREE' : '\$${deliveryFee.toStringAsFixed(2)}', 
+                          isBold: deliveryFee == 0.0, 
+                          valueColor: deliveryFee == 0.0 ? Theme.of(context).colorScheme.primary : Colors.black,),
                         const Divider(height: 30, thickness: 1),
-                        _buildSummaryRow('Total', '\$${(subtotal + deliveryFee).toStringAsFixed(2)}', isBold: true, fontSize: 22),
+                        _buildSummaryRow('Total', '\$${(totalAmount).toStringAsFixed(2)}', isBold: true, fontSize: 22),
                         const SizedBox(height: 20),
                         
-                        // Przycisk "Przejdź do kasy"
                         SizedBox(
                           width: double.infinity,
                           height: 60,
@@ -190,7 +247,7 @@ class _CartScreenState extends State<CartScreen> {
                             onPressed: items.isEmpty 
                               ? null
                               : () {
-                                  final cartBloc = context.read<CartBloc>(); 
+                                  final cartBloc = context.read<CartBloc>();
                               
                               Navigator.push(
                                 context,
@@ -204,7 +261,8 @@ class _CartScreenState extends State<CartScreen> {
                                         create: (context) => OrderBloc(FirebaseOrderRepo()),
                                       ),
                                     ],
-                                    child: const CheckoutScreen(),
+                                    child: CheckoutScreen(deliveryFee: deliveryFee,
+                                          discountAmount: discountAmount,),
                                   ),
                                 ),
                               );
@@ -294,7 +352,6 @@ class _CartScreenState extends State<CartScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary),
                     ),
                     
-                    // Przyciski +/- 
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,

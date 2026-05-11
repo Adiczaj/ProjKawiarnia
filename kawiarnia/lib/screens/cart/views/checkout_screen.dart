@@ -8,19 +8,27 @@ import 'package:order_repository/order_repository.dart';
 import 'order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  final double deliveryFee;
+  final double discountAmount;
+  
+  const CheckoutScreen({
+    super.key, 
+    required this.deliveryFee, 
+    required this.discountAmount
+  });
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  final Color _bgColor = const Color(0xFFFCF7F3); 
+  Color get _bgColor => Theme.of(context).colorScheme.surface; 
   Color get _primaryBrown => Theme.of(context).colorScheme.primary; 
   final Color _cardBgColor = const Color(0xFFF6EFEA); 
 
   late String _selectedDate;
   String _selectedTime = '';
+  DateTime? _actualCustomDate;
 
   late DateTime _todayDate;
   late DateTime _tomorrowDate;
@@ -117,6 +125,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  void _resetDateTime() {
+    setState(() {
+      if (!_isDayOff(_todayDate)) {
+        _selectedDate = _todayStr;
+      } else if (!_isDayOff(_tomorrowDate)) {
+        _selectedDate = _tomorrowStr;
+      } else {
+        _selectedDate = _formatDate(_getInitialCalendarDate(_todayDate), 'Custom'); 
+      }
+
+      _selectedTime = _getFirstAvailableTime();
+
+      if (_selectedTime.isEmpty && _selectedDate == _todayStr) {
+        if (!_isDayOff(_tomorrowDate)) {
+          _selectedDate = _tomorrowStr;
+          _selectedTime = _timeSlots.first;
+        }
+      }
+    });
+  }
+
   DateTime _getInitialCalendarDate(DateTime now) {
     DateTime date = now.add(const Duration(days: 2));
     while (_isDayOff(date)) {
@@ -146,6 +175,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     if (picked != null) {
+      _actualCustomDate = picked;
       _onDateChanged(_formatDate(picked, 'Custom'));
     }
   }
@@ -206,11 +236,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           if (state is CartLoaded) {
             final items = state.items;
             
-            final double totalBrutto = state.totalPrice; 
-            final double subtotal = totalBrutto / 1.23;
-            final double estimatedTax = totalBrutto - subtotal;
-            final double shippingFee = items.isEmpty ? 0.0 : 8.50;
-            final double totalAmount = totalBrutto + shippingFee;
+            final double originalSubtotal = state.totalPrice; 
+            final double totalAfterDiscount = originalSubtotal - widget.discountAmount;
+            final double subtotal = totalAfterDiscount / 1.23;
+            final double estimatedTax = totalAfterDiscount - subtotal;
+            final double shippingFee = widget.deliveryFee;
+            final double totalAmount = totalAfterDiscount + shippingFee;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
@@ -219,7 +250,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   Text('Review\nOrder', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: _primaryBrown, height: 1.1)),
                   const SizedBox(height: 12),
-                  Text('One final check before your sensory\nexperience arrives.', style: TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4)),
+                  Text('One final check before your sensory\nexperience arrives.', style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface, height: 1.4)),
                   const SizedBox(height: 30),
 
                   // ADRES DOSTAWY
@@ -236,17 +267,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // CZAS DOSTAWY
                   _buildSectionCard(
                     icon: Icons.access_time_filled, title: 'Delivery Time', actionText: 'RESET',
-                    onActionTap: () {
-                      if (!_isDayOff(_todayDate)) {
-                        _onDateChanged(_todayStr);
-                        if (_selectedTime.isEmpty && !_isDayOff(_tomorrowDate)) {
-                          _onDateChanged(_tomorrowStr); 
-                        }
-                      }
-                    },
+                    onActionTap: _resetDateTime,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -273,7 +296,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // PŁATNOŚĆ
                   _buildSectionCard(
                     icon: Icons.payments, title: 'Payment Method', actionText: 'CHANGE', onActionTap: () {},
                     content: Row(
@@ -286,13 +308,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // KOSZYK
                   const Text('YOUR SELECTION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.black54)),
                   const SizedBox(height: 16),
                   
-                  if (items.isEmpty)
-                    Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Center(child: Text('Twoje zamówienie jest puste.', style: TextStyle(color: Colors.grey.shade600, fontSize: 16))))
-                  else
                     ...items.map((item) => _buildCartItem(
                       item.product, 
                       'Rozmiar: ${item.size}, Mleko: ${item.milk}, Cukier: ${item.sugar}', 
@@ -303,15 +321,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     
                   const SizedBox(height: 24),
 
-                  // PODSUMOWANIE
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(color: _cardBgColor, borderRadius: BorderRadius.circular(30)),
                     child: Column(
                       children: [
-                        _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', isBold: false),
+                        _buildSummaryRow('Subtotal', '\$${originalSubtotal.toStringAsFixed(2)}', isBold: false),
+      
+                        if (widget.discountAmount > 0) ...[
+                          const SizedBox(height: 12),
+                        _buildSummaryRow('Discount', '-\$${widget.discountAmount.toStringAsFixed(2)}', isBold: false, valueColor: _primaryBrown),
+                        ],
+      
                         const SizedBox(height: 12),
-                        _buildSummaryRow('Shipping (Express)', '\$${shippingFee.toStringAsFixed(2)}', isBold: false),
+      
+                        _buildSummaryRow(
+                          'Shipping (Express)', 
+                          shippingFee == 0.0 ? 'FREE' : '\$${shippingFee.toStringAsFixed(2)}', 
+                          isBold: shippingFee == 0.0,
+                          valueColor: shippingFee == 0.0 ? _primaryBrown : null,
+                        ),
+      
                         const SizedBox(height: 12),
                         _buildSummaryRow('Estimated Tax', '\$${estimatedTax.toStringAsFixed(2)}', isBold: false),
                         const Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: Divider(color: Colors.black12, thickness: 1)),
@@ -321,7 +351,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // PRZYCISK FINALIZACJI
                   SizedBox(
                     width: double.infinity, height: 60,
                     child: ElevatedButton(
@@ -346,7 +375,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           if (_selectedDate == _tomorrowStr) {
                             actualDeliveryDate = _tomorrowDate;
                           } else if (_selectedDate != _todayStr) {
-                            actualDeliveryDate = DateTime.now().add(const Duration(days: 2)); 
+                            actualDeliveryDate = _actualCustomDate ?? DateTime.now().add(const Duration(days: 2));
                           }
 
                           final order = Order(
@@ -380,7 +409,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // WIDŻETY POMOCNICZE W ŚRODKU
 
   Widget _buildSectionCard({required IconData icon, required String title, required String actionText, required VoidCallback onActionTap, required Widget content}) {
     return Container(

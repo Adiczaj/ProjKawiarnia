@@ -26,6 +26,9 @@ dependencies:
     path: packages/cart_item_repository
   order_repository:
     path: packages/order_repository
+  intl: ^0.20.2
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.17.5
 
 dev_dependencies:
   flutter_test:

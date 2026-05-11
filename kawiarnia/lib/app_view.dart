@@ -19,10 +19,10 @@ class MyAppView extends StatelessWidget {
         title: 'Kawiarnia',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-            colorScheme: ColorScheme.light(
-                surface: Colors.grey.shade200,
+            colorScheme: const ColorScheme.light(
+                surface: Color(0xFFFCF7F3),
                 onSurface: Colors.black,
-                primary: const Color.fromARGB(255, 192, 131, 111),
+                primary: Color.fromARGB(255, 192, 131, 111),
                 onPrimary: Colors.white)),
         home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
           builder: ((context, state) {

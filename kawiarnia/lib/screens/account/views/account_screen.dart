@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/screens/account/views/active_order_screen.dart' hide Order;
-
-// Upewnij się, że te ścieżki zgadzają się z Twoim projektem:
+import 'package:kawiarnia/screens/account/views/informations_screen.dart';
 import 'package:kawiarnia/screens/account/views/no_active_order_screen.dart';
+import 'package:kawiarnia/screens/account/views/payment_methods_screen.dart';
 import 'package:kawiarnia/screens/auth/blocks/sign_in_bloc/sign_in_bloc.dart';
 import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
-import 'package:order_repository/order_repository.dart'; 
+import 'package:order_repository/order_repository.dart';
+import 'order_history_screen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,11 +17,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Zostawiamy tylko to, co na razie nie pochodzi z bazy
   final String _memberLevel = 'GOLD MEMBER';
   bool _notificationsOn = true;
   
-  final Color _bgColor = const Color(0xFFFCF7F3); 
+  Color get _bgColor => Theme.of(context).colorScheme.surface; 
   Color get _primaryBrown => Theme.of(context).colorScheme.primary; 
   final Color _cardBgColor = const Color(0xFFF6EFEA); 
   final Color _accentPink = const Color(0xFFF4DFD4); 
@@ -44,16 +44,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       
-      // 1. OWIJAMY CAŁY WIDOK W BLOC BUILDER
       body: BlocBuilder<AuthenticationBloc, AuthenticationState>(
         builder: (context, authState) {
           
-          // Bezpieczne pobranie danych użytkownika z BLoC-a
           final bool isAuthenticated = authState.status == AuthenticationStatus.authenticated;
           final String userId = isAuthenticated ? authState.user!.userId : '';
-          
-          // Zmień '.name', jeśli w Twoim modelu uzytkownika imię nazywa się inaczej (np. '.displayName' lub '.email')
-          // Jeśli nie masz jeszcze imion w bazie, wpisz tu na sztywno jakiś tekst do testów.
+
           final String userName = isAuthenticated && authState.user!.name.isNotEmpty
               ? authState.user!.name 
               : 'Miłośnik Kawy';
@@ -62,7 +58,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
             child: Column(
               children: [
-                // ZDJĘCIE PROFILOWE
                 Center(
                   child: Stack(
                     alignment: Alignment.bottomRight,
@@ -98,7 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // DYNAMICZNE IMIĘ UŻYTKOWNIKA
                 Text(
                   userName,
                   style: const TextStyle(
@@ -126,7 +120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // ACTIVE ORDERS CARD Z DYNAMICZNYM STREAM BUILDEREM
                 StreamBuilder<List<Order>>(
                   stream: userId.isNotEmpty ? FirebaseOrderRepo().getOrders(userId) : null,
                   builder: (context, snapshot) {
@@ -225,7 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // SETTINGS SECTION
                 _buildSectionTitle('Settings'),
                 const SizedBox(height: 16),
                 ListView.separated(
@@ -240,7 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 
                 const SizedBox(height: 40), 
 
-                // LOG OUT BUTTON 
                 Center(
                   child: SizedBox(
                     width: 200,
@@ -280,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- Funkcje pomocnicze pozostały absolutnie bez zmian ---
+  // --- Funkcje pomocnicze ---
 
   Widget _buildSectionTitle(String title) {
     return Align(
@@ -363,10 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Account Information')),
-              body: const Center(child: Text('Account Information Screen')),
-            ),
+            builder: (context) => const AccountDetailsScreen(),
           ),
         );
         break;
@@ -374,10 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Order History')),
-              body: const Center(child: Text('Order History Screen')),
-            ),
+            builder: (context) => const OrderHistoryScreen(),
           ),
         );
         break;
@@ -385,10 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Payment Methods')),
-              body: const Center(child: Text('Payment Methods Screen')),
-            ),
+            builder: (context) => const PaymentMethodsScreen(),
           ),
         );
         break;

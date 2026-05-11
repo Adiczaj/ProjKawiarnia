@@ -8,12 +8,14 @@ class OrderItem {
   final String name;
   final String description;
   final double price;
+  final int quantity;
 
   const OrderItem({
     required this.imageUrl,
     required this.name,
     required this.description,
     required this.price,
+    required this.quantity,
   });
 }
 
@@ -48,6 +50,7 @@ OrderItem mapItem(order_repo.Items item) {
     name: item.product,
     description: 'Size: ${item.size}, Sugar: ${item.sugar}, Milk: ${item.milk}',
     price: item.price,
+    quantity: item.quantity,
   );
 }
 
@@ -71,7 +74,6 @@ class ActiveOrdersScreen extends StatefulWidget {
 class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   @override
   Widget build(BuildContext context) {
-    // Paleta kolorów
     final Color darkBrownColor = Theme.of(context).colorScheme.primary;
     const Color lightBrownColor = Color(0xFF9E8B83);
     const Color brewingLabelColor = Color(0xFFFBE4D7);
@@ -81,7 +83,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: darkBrownColor),
@@ -118,7 +120,14 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
               final repoOrders = snapshot.data ?? [];
-              final orders = repoOrders.map(mapOrder).toList();
+              final activeRepoOrders = repoOrders.where((order) {
+                final status = order.status.trim().toLowerCase();
+                return status == 'received' || 
+                       status == 'brewing' || 
+                       status == 'ready for pickup' || 
+                       status == 'on the way';
+              }).toList();
+              final orders = activeRepoOrders.map(mapOrder).toList();
               if (orders.isEmpty) {
                 return const Center(child: Text('No active orders'));
               }
@@ -146,7 +155,6 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   }
 }
 
-// 4. Widżet karty dla pojedynczego zamówienia
 class OrderCard extends StatelessWidget {
   final Order order;
   final Color darkBrownColor;
@@ -185,7 +193,6 @@ class OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Nagłówek karty (Referencja i status)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -232,7 +239,6 @@ class OrderCard extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // Lista produktów (zagnieżdżona w Column)
             Column(
               children: order.items
                   .map((item) => Padding(
@@ -246,11 +252,9 @@ class OrderCard extends StatelessWidget {
                   .toList(),
             ),
 
-            // Podziałka
             const Divider(height: 1),
             const SizedBox(height: 24),
 
-            // Dół karty (Całkowita kwota i przycisk)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -277,13 +281,11 @@ class OrderCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // 5. Logika przycisku "Contact Courier"
                 SizedBox(
                   width: 170, // Szerokość przycisku
                   child: ElevatedButton(
                     onPressed: order.canContactCourier
                         ? () {
-                            // Tutaj dodaj logikę skontaktowania się z kurierem
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Łączę z kurierem... 📞')),
                             );
@@ -319,7 +321,6 @@ class OrderCard extends StatelessWidget {
   }
 }
 
-// 6. Widżet rzędu dla pojedynczego produktu
 class OrderItemRow extends StatelessWidget {
   final OrderItem item;
   final Color darkBrownColor;
@@ -336,7 +337,6 @@ class OrderItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Obrazek produktu
         Container(
           width: 70,
           height: 70,
@@ -361,13 +361,12 @@ class OrderItemRow extends StatelessWidget {
         ),
         const SizedBox(width: 20),
 
-        // Opis produktu
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.name,
+                '${item.quantity}x ${item.name}',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -388,9 +387,8 @@ class OrderItemRow extends StatelessWidget {
           ),
         ),
 
-        // Cena
         Text(
-          '\$${item.price.toStringAsFixed(2)}',
+          '\$${(item.price * item.quantity).toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
