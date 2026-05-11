@@ -62,7 +62,10 @@ class FirebaseUserRepo implements UserRepository {
     try {
       await usersCollection
         .doc(myUser.userId)
-        .set(myUser.toEntity().toDocument());
+        .set(
+          myUser.toEntity().toDocument(),
+          SetOptions(merge: true),
+        );
     } catch (e) {
       log(e.toString());
       rethrow;

@@ -1,7 +1,15 @@
+import 'package:cart_item_repository/cart_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
+
+// ignore: implementation_imports
+import 'package:product_repository/src/models/product.dart';
 
 class DetailsScreen extends StatefulWidget {
-  const DetailsScreen({super.key});
+  final Product product;
+  const DetailsScreen(this.product, {super.key});
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -9,200 +17,338 @@ class DetailsScreen extends StatefulWidget {
 
 class _DetailsScreenState extends State<DetailsScreen> {
   int _quantity = 1;
-  final double _basePrice = 35.0;
+  String _selectedSize = 'Medium';
+  String _selectedSugar = 'No';
+  late String _selectedMilk; 
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product.milk == false) {
+      _selectedMilk = 'None';
+    } else {
+      _selectedMilk = 'Whole';
+    }
+  }
+
+  Color get _bgColor => Theme.of(context).colorScheme.surface;
+  Color get _primaryBrown => Theme.of(context).colorScheme.primary;
+  final Color _cardBgColor = const Color(0xFFF6EFEA);
+
+  double get _currentPrice {
+    double basePrice = widget.product.price;
+    if (_selectedSize == 'Small') {
+      return basePrice - 1.00;
+    } else if (_selectedSize == 'Large') {
+      return basePrice + 0.50;
+    }
+    if (_selectedMilk == 'Oat') {
+      basePrice += 0.70;
+    } else if (_selectedMilk == 'Soy') {
+      basePrice += 0.50;
+    }
+    return basePrice;
+  }
+
+  
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = Theme.of(context).colorScheme.surface;
-    final coffeeBarColor = Theme.of(context).colorScheme.primary;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: _bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: Icon(Icons.arrow_back, color: _primaryBrown),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Clockwork Coffee',
+          style: TextStyle(
+            color: _primaryBrown,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ZDJĘCIE
-            Container(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.width * 0.9,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/caffe_latte.png'),
-                  fit: BoxFit.contain,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: Container(
+                width: double.infinity,
+                height: 320,
+                color: const Color(0xFF3E2723),
+                child: Image.network(
+                  widget.product.link,
+                  //fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.coffee,
+                    size: 60,
+                    color: Colors.white54,
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            const SizedBox(height: 24),
+
+            Text(
+              widget.product.product,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '\$${_currentPrice.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: _primaryBrown,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: _cardBgColor,
+                borderRadius: BorderRadius.circular(30),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Caffe Latte',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(Icons.star, color: Color(0xFFD4A66C), size: 18),
-                              SizedBox(width: 4),
-                              Text('4.6(600)', style: TextStyle(color: Colors.grey)),
-                              SizedBox(width: 16),
-                              Icon(Icons.access_time_filled, color: Colors.grey, size: 18),
-                              SizedBox(width: 4),
-                              Text('20-30min', style: TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                if (_quantity > 1) {
-                                  setState(() {
-                                    _quantity--;
-                                  });
-                                }
-                              },
-                              child: Icon(
-                                Icons.remove, 
-                                color: _quantity > 1 ? coffeeBarColor : Colors.grey, 
-                                size: 20
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '$_quantity',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            const SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _quantity++;
-                                });
-                              },
-                              child: Icon(Icons.add, color: coffeeBarColor, size: 20),
-                            ),
-                          ],
+                      Icon(Icons.description_outlined, color: _primaryBrown, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'The Experience',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 30),
-
-                  const Text(
-                    'Opis',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Nasza klasyczna Caffe Latte z idealną proporcją espresso, gorącego mleka i kremowej pianki, podana w izolowanej szklance, aby utrzymać temperaturę.',
-                    style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  const Text(
-                    'Opcje / Preferencje',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: const TextField(
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Wpisz swoje preferencje, np. mleko owsiane, mniej lodu...',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.product.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade800,
+                      height: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 40),
                 ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            _buildSectionTitle('CUP SIZE'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildOptionButton('Small', _selectedSize == 'Small', () => setState(() => _selectedSize = 'Small')),
+                _buildOptionButton('Medium', _selectedSize == 'Medium', () => setState(() => _selectedSize = 'Medium')),
+                _buildOptionButton('Large', _selectedSize == 'Large', () => setState(() => _selectedSize = 'Large')),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            _buildSectionTitle('SUGAR LEVEL'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildOptionButton('No', _selectedSugar == 'No', () => setState(() => _selectedSugar = 'No')),
+                _buildOptionButton('Normal', _selectedSugar == 'Normal', () => setState(() => _selectedSugar = 'Normal')),
+                _buildOptionButton('Medium', _selectedSugar == 'Medium', () => setState(() => _selectedSugar = 'Medium')),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            if (widget.product.milk) ...[
+              _buildSectionTitle('MILK TYPE'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildOptionButton('Whole', _selectedMilk == 'Whole', () => setState(() => _selectedMilk = 'Whole')),
+                  _buildOptionButton('Oat', _selectedMilk == 'Oat', () => setState(() => _selectedMilk = 'Oat')),
+                  _buildOptionButton('Soy', _selectedMilk == 'Soy', () => setState(() => _selectedMilk = 'Soy')),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
+          ],
+        ),
+      ),
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: BoxDecoration(
+          color: _bgColor,
+          boxShadow: [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: _bgColor.withOpacity(0.9),
+              blurRadius: 20,
+              offset: const Offset(0, -20),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 55,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  // ignore: deprecated_member_use
+                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    color: _quantity > 1 ? Colors.black87 : Colors.grey,
+                    onPressed: () {
+                      if (_quantity > 1) setState(() => _quantity--);
+                    },
+                  ),
+                  SizedBox(
+                    width: 20,
+                    child: Text(
+                      '$_quantity',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    color: Colors.black87,
+                    onPressed: () => setState(() => _quantity++),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            
+            Expanded(
+              child: SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryBrown,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 5,
+                  ),
+                  onPressed: () {
+                    final authState = context.read<AuthenticationBloc>().state;
+                    
+                    if (authState.status != AuthenticationStatus.authenticated) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('You must be logged in to add items to the cart!')),
+                      );
+                      return;
+                    }
+
+                    final String userId = authState.user!.userId;
+                    final newItem = CartItem(
+                      cartId: '',
+                      productId: widget.product.productId, 
+                      product: widget.product.product,
+                      link: widget.product.link,
+                      price: _currentPrice,
+                      quantity: _quantity,
+                      size: _selectedSize,
+                      sugar: _selectedSugar,
+                      milk: _selectedMilk, 
+                    );
+                    context.read<CartBloc>().add(AddProductToCart(userId, newItem));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Added $_quantity ${widget.product.product} to cart!'),
+                        backgroundColor: _primaryBrown,
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Add To Cart',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '\$${(_currentPrice * _quantity).toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
 
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: 60,
-            decoration: BoxDecoration(
-              color: coffeeBarColor,
-              borderRadius: BorderRadius.circular(30),
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.5,
+        color: Colors.black54,
+      ),
+    );
+  }
+
+  Widget _buildOptionButton(String text, bool isSelected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: isSelected ? _primaryBrown : Colors.grey.shade300,
+              width: 1,
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(30),
-                onTap: () {
-                  // todo cart add action
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Dodaj do koszyka',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '\$${(_basePrice * _quantity).toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isSelected ? _primaryBrown : Colors.grey.shade600,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),

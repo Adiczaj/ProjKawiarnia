@@ -5,12 +5,14 @@ class MyUser {
   String email;
   String name;
   bool hasActiveCart;
+  String phone;
 
   MyUser({
     required this.userId,
     required this.email,
     required this.name,
     required this.hasActiveCart,
+    required this.phone,
   });
 
   static final empty = MyUser(
@@ -18,6 +20,7 @@ class MyUser {
 		email: '', 
 		name: '',
     hasActiveCart: false,
+    phone: ''
 	);
 
   MyUserEntity toEntity() {
@@ -26,6 +29,7 @@ class MyUser {
       email: email, 
       name: name,
       hasActiveCart: hasActiveCart,
+      phone: phone
     );
   }
 
@@ -34,12 +38,13 @@ class MyUser {
       userId: entity.userId, 
       email: entity.email, 
       name: entity.name, 
-      hasActiveCart: entity.hasActiveCart
+      hasActiveCart: entity.hasActiveCart,
+      phone: entity.phone
     );
   }
 
   @override
   String toString() {
-    return 'MyUser: $userId, $email, $name, $hasActiveCart';
+    return 'MyUser: $userId, $email, $name, $hasActiveCart, $phone';
   }
 }
