@@ -1,11 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kawiarnia/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:kawiarnia/screens/cart/blocks/cart_bloc/cart_bloc.dart';
 import 'package:kawiarnia/screens/cart/blocks/order_bloc/order_bloc.dart';
-import 'package:order_repository/order_repository.dart';
+import 'package:order_repository/order_repository.dart' as order_repository;
 
 import 'order_success_screen.dart';
+import 'edit_delivery_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final double deliveryFee;
@@ -25,6 +27,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Color get _bgColor => Theme.of(context).colorScheme.surface; 
   Color get _primaryBrown => Theme.of(context).colorScheme.primary; 
   final Color _cardBgColor = const Color(0xFFF6EFEA); 
+
+  String _addressName = 'Loading data...'; 
+  String _addressStreet = 'Searching for address...';
+  String _addressLabel = 'Address';
 
   late String _selectedDate;
   String _selectedTime = '';
@@ -77,6 +83,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!_isDayOff(_tomorrowDate)) {
         _selectedDate = _tomorrowStr;
         _selectedTime = _timeSlots.first;
+      }
+    }
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final authState = context.read<AuthenticationBloc>().state;
+    
+    if (authState.status == AuthenticationStatus.authenticated) {
+      final user = authState.user!;
+      final userId = user.userId;
+      
+      setState(() {
+        _addressName = user.name; 
+      });
+
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        
+        if (doc.exists && doc.data()!.containsKey('defaultAddress')) {
+          final data = doc.data()!['defaultAddress'] as Map<String, dynamic>;
+          
+          setState(() {
+            _addressLabel = data['label'] ?? 'Home';
+            
+            String street = data['street'] ?? '';
+            String apt = (data['apartment']?.isNotEmpty ?? false) ? ', ${data['apartment']}' : '';
+            String city = data['city'] ?? '';
+            String postal = data['postalCode'] ?? '';
+            
+            _addressStreet = "$street$apt\n$postal $city";
+          });
+        } else {
+           setState(() {
+             _addressStreet = "No saved address.\nClick EDIT to add one.";
+             _addressLabel = "New Address";
+           });
+        }
+      } catch (e) {
+        setState(() {
+          _addressStreet = "Error loading address.\nClick EDIT to try again.";
+          _addressLabel = "Error";
+        });
       }
     }
   }
@@ -253,15 +302,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Text('One final check before your sensory\nexperience arrives.', style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface, height: 1.4)),
                   const SizedBox(height: 30),
 
-                  // ADRES DOSTAWY
                   _buildSectionCard(
-                    icon: Icons.local_shipping, title: 'Delivery Address', actionText: 'EDIT', onActionTap: () {},
+                    icon: Icons.local_shipping, 
+                    title: 'Delivery Address', 
+                    actionText: 'EDIT', 
+                    onActionTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DeliveryAddressScreen(), 
+                        ),
+                      );
+
+                      if (result != null && result is Map<String, String>) {
+                        setState(() {
+                          _addressLabel = result['label'] ?? 'Home';
+                          
+                          String apt = result['apartment']!.isNotEmpty ? ', ${result['apartment']}' : '';
+                          _addressStreet = "${result['street']}$apt\n${result['city']}, ${result['postalCode']}";
+                        });
+                      }
+                    },
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Julianna Thorne', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                        Text(_addressName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                         const SizedBox(height: 4),
-                        Text('882 Aromatic Lane, Suite 4\nPortland, OR 97201', style: TextStyle(color: Colors.grey.shade700, height: 1.5)),
+                        Text(_addressStreet, style: TextStyle(color: Colors.grey.shade700, height: 1.5)),
                       ],
                     ),
                   ),
@@ -360,7 +427,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           final String userId = (authState.status == AuthenticationStatus.authenticated) 
                               ? authState.user!.userId 
                               : '';
-                          final List<Items> orderItems = items.map((item) => Items(
+                          final List<order_repository.Items> orderItems = items.map((item) => order_repository.Items(
                             productId: item.productId, 
                             product: item.product,
                             link: item.link,
@@ -378,9 +445,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             actualDeliveryDate = _actualCustomDate ?? DateTime.now().add(const Duration(days: 2));
                           }
 
-                          final order = Order(
+                          final order = order_repository.Order(
                             orderId: '',
                             userId: userId,
+                            deliveryAddress: '$_addressLabel: $_addressStreet',
                             totalAmount: totalAmount,
                             createdAt: DateTime.now(),
                             deliveryDate: actualDeliveryDate, 

@@ -4,6 +4,7 @@ import 'models.dart';
 class Order {
   final String orderId;
   final String userId;
+  final String deliveryAddress;
   final double totalAmount;
   final DateTime createdAt;
   final DateTime deliveryDate;
@@ -15,6 +16,7 @@ class Order {
   Order({
     required this.orderId,
     required this.userId,
+    required this.deliveryAddress,
     required this.totalAmount,
     required this.createdAt,
     required this.deliveryDate,
@@ -28,6 +30,7 @@ class Order {
     return OrderEntity(
       orderId: orderId,
       userId: userId,
+      deliveryAddress: deliveryAddress,
       totalAmount: totalAmount,
       createdAt: createdAt,
       deliveryDate: deliveryDate,
@@ -42,6 +45,7 @@ class Order {
     return Order(
       orderId: entity.orderId,
       userId: entity.userId,
+      deliveryAddress: entity.deliveryAddress,
       totalAmount: entity.totalAmount,
       createdAt: entity.createdAt,
       deliveryDate: entity.deliveryDate,

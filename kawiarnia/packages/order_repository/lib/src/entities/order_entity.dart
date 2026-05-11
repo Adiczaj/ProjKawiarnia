@@ -3,6 +3,7 @@ import 'order_items_entity.dart';
 class OrderEntity {
   final String orderId;
   final String userId;
+  final String deliveryAddress;
   final double totalAmount;
   final DateTime createdAt;
   final DateTime deliveryDate;
@@ -14,6 +15,7 @@ class OrderEntity {
   OrderEntity({
     required this.orderId,
     required this.userId,
+    required this.deliveryAddress,
     required this.totalAmount,
     required this.createdAt,
     required this.deliveryDate,
@@ -27,6 +29,7 @@ class OrderEntity {
     return {
       'orderId': orderId,
       'userId': userId,
+      'deliveryAddress': deliveryAddress,
       'totalAmount': totalAmount,
       'createdAt': createdAt.toIso8601String(),
       'deliveryDate': deliveryDate.toIso8601String(),
@@ -41,6 +44,7 @@ class OrderEntity {
     return OrderEntity(
       orderId: doc['orderId'] as String,
       userId: doc['userId'] as String,
+      deliveryAddress: doc['deliveryAddress'] as String,
       totalAmount: (doc['totalAmount'] as num).toDouble(),
       createdAt: DateTime.parse(doc['createdAt'] as String),
       deliveryDate: DateTime.parse(doc['deliveryDate'] as String),
